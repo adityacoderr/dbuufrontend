@@ -1,45 +1,46 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
-const VideoCall = () => {
+const VideoCall = ({ user }) => {
+    if (!user) return <div>Loading...</div>;
+
     const [hasMatched, setHasMatched] = useState(false);
-    const [matchedUser, setMatchedUser] = useState(null); // Store the matched user
+    const [matchedUser, setMatchedUser] = useState(null);
     const [localStream, setLocalStream] = useState(null);
     const [peerConnection, setPeerConnection] = useState(null);
+    const [room, setRoom] = useState(null);
+
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const socket = useRef(null);
 
+    const userId = user._id;
+    const gender = user.gender;
+    const interests = user.interests;
+
     useEffect(() => {
-        // Create a new socket connection
         socket.current = io("http://localhost:5001");
 
-        // Listen for matchFound event
-        socket.current.on("matchFound", handleMatchFound);
+        socket.current.on("matchFound", ({ matchedUser, socketId, room }) => {
+            console.log("Matched with:", matchedUser);
+            setMatchedUser({ userId: matchedUser, socketId });
+            setRoom(room);
+            setHasMatched(true);
+        });
+
+        socket.current.on("offer", handleOffer);
+        socket.current.on("answer", handleAnswer);
+        socket.current.on("ice-candidate", handleIceCandidate);
 
         return () => {
-            // Close the socket connection on cleanup
-            socket.current.close();
+            socket.current.disconnect();
         };
     }, []);
 
-    const handleMatchFound = (match) => {
-        console.log("Match found:", match);
-        setMatchedUser(match);
-        setHasMatched(true);
-    };
-
-    const startMatching = async () => {
+    const startMatching = () => {
         if (!socket.current) return;
 
-        // Replace 'gender' and 'interests' with actual values from user data
-        const userData = {
-            userId: "user123", // Replace with actual user ID
-            gender: "female",  // Replace with actual gender
-            interests: ["music", "sports"],  // Replace with actual interests
-        };
-
-        socket.current.emit("findMatch", userData);
+        socket.current.emit("findMatch", { userId, gender, interests });
     };
 
     const startVideoCall = async () => {
@@ -48,49 +49,39 @@ const VideoCall = () => {
             return;
         }
 
+        console.log("Waiting 10 seconds before starting the call...");
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 10 seconds
+
         try {
-            // Get the user's media stream (video and audio)
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
-            // Display the local video stream
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
-
             setLocalStream(stream);
 
-            // Create a new peer connection for WebRTC
             const pc = new RTCPeerConnection();
-
-            // Add tracks to the peer connection
             stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
-            // Set up the ICE candidate handler
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
                     socket.current.emit("ice-candidate", { candidate: event.candidate, to: matchedUser.socketId });
                 }
             };
 
-            // Set up the remote video stream
             pc.ontrack = (event) => {
                 if (remoteVideoRef.current) {
                     remoteVideoRef.current.srcObject = event.streams[0];
                 }
             };
 
-            // Create an offer and set it as the local description
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
-            // Send the offer to the matched user
             socket.current.emit("offer", { offer, to: matchedUser.socketId });
-            setPeerConnection(pc); // Save the peer connection
+            setPeerConnection(pc);
         } catch (error) {
             console.error("Error starting video call:", error);
-            if (error.name === "NotReadableError") {
-                alert("The camera or microphone is already in use by another application.");
-            }
         }
     };
 
@@ -98,7 +89,6 @@ const VideoCall = () => {
         const pc = new RTCPeerConnection();
         setPeerConnection(pc);
 
-        // Get the user's media stream
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
         if (localVideoRef.current) {
@@ -107,19 +97,16 @@ const VideoCall = () => {
 
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
 
-        // Set remote description (the offer)
         await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
-        // Create an answer
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        // Send the answer back to the offerer
         socket.current.emit("answer", { answer, to: from });
 
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                socket.current.emit("ice-candidate", { candidate: event.candidate });
+                socket.current.emit("ice-candidate", { candidate: event.candidate, to: from });
             }
         };
 

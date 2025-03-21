@@ -1,4 +1,7 @@
-const acceptFriendRequest = async (senderId) => {
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const AcceptFriendRequest = async (senderId) => {
     try {
         const token = localStorage.getItem("token");
         await axios.post(`http://localhost:5001/api/friends/accept-request/${senderId}`, {}, {
@@ -9,3 +12,5 @@ const acceptFriendRequest = async (senderId) => {
         alert(error.response.data.message);
     }
 };
+
+export default AcceptFriendRequest;

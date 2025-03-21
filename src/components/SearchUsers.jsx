@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import UserCard from "./UserCard";
+import AcceptFriendRequest from "./AcceptFriendRequest";
 
 const SearchUsers = () => {
     const [query, setQuery] = useState("");
@@ -19,6 +20,7 @@ const SearchUsers = () => {
             console.log(error.response?.data?.message || "Error fetching users");
         }
     };
+    
     
 
     return (
@@ -43,7 +45,6 @@ const SearchUsers = () => {
                 )}
             </div>
             )}
-            
         </div>
     );
 };

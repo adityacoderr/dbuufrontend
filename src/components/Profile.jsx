@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import io from "socket.io-client";
+import { useNavigate } from "react-router-dom";
 import SearchUsers from "./SearchUsers";
-import VideoCall from "./VideoCall";
 
 const socket = io("http://localhost:5001", { transports: ["websocket"] });
 
 const Profile = () => {
     const [user, setUser] = useState(null);
     const [friendRequests, setFriendRequests] = useState([]);
-    const [onlineUsers, setOnlineUsers] = useState(0);
-    const [image, setImage] = useState(null); // Image file state
-    const [description, setDescription] = useState(""); // Description state
-    const [uploadStatus, setUploadStatus] = useState(""); // Status message
-    const [posts, setPosts] = useState([]); // To store and display posts (uploaded images)
+    const [image, setImage] = useState(null);
+    const [description, setDescription] = useState("");
+    const [uploadStatus, setUploadStatus] = useState("");
+    const [posts, setPosts] = useState([]);
 
     const username = localStorage.getItem("username");
 
+    // Fetch User Profile
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -26,96 +27,89 @@ const Profile = () => {
                     return;
                 }
                 const res = await axios.get("http://localhost:5001/api/user/profile", {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
                 setUser(res.data);
-                console.log(user);
             } catch (error) {
                 console.log("Error fetching profile:", error.response?.data?.message);
             }
         };
 
+        fetchProfile();
+
+        if (username) {
+            socket.emit("user-online", username);
+        }
+
+        return () => {
+            socket.emit("user-offline", username);
+        };
+    }, [username]);
+    // Fetch Friend Requests
+    useEffect(() => {
         const fetchFriendRequests = async () => {
             try {
                 const token = localStorage.getItem("token");
+                if (!token) return;
+
                 const res = await axios.get("http://localhost:5001/api/friends/friend-requests", {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-                setFriendRequests(res.data.friendRequests);
+
+                setFriendRequests(res.data.requests);
             } catch (error) {
                 console.log("Error fetching friend requests:", error.response?.data?.message);
             }
         };
 
+        fetchFriendRequests();
+    }, []);
+
+
+    // Fetch Posts after user is set
+    useEffect(() => {
+        if (!user?._id) return;
+
         const fetchPosts = async () => {
             try {
                 const token = localStorage.getItem("token");
-                if (!token) {
-                    console.log("No token found");
-                    return;
-                }
-
-                const res = await axios.get(`http://localhost:5001/api/post/posts/${user?._id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                if (!token) return;
+                const res = await axios.get(`http://localhost:5001/api/post/posts/${user._id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log(res.data);
-                setPosts(res.data.posts); // Set posts in the state
+                setPosts(res.data.posts);
             } catch (error) {
                 console.log("Error fetching posts:", error.response?.data?.message);
             }
         };
 
-        fetchProfile();
-        fetchFriendRequests();
         fetchPosts();
+    }, [user]);
 
-        // Emit event when user is online
-        if (username) {
-            socket.emit("user-online", username);
-        }
-
-        // Listen for online user updates
-        socket.on("update-online-users", (count) => {
-            setOnlineUsers(count);
-        });
-
-        // Cleanup on unmount
-        return () => {
-            socket.emit("user-offline", username);
-            socket.off("update-online-users");
-        };
-    }, [username, user?._id]); // Added `user?._id` as a dependency to refetch posts when the user changes
-
-    const handleAccept = async (senderId) => {
+    // Accept Friend Request Function
+    const AcceptFriendRequest = async (senderId) => {
         try {
             const token = localStorage.getItem("token");
             await axios.post(`http://localhost:5001/api/friends/accept-request/${senderId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
-            setFriendRequests(friendRequests.filter(request => request._id !== senderId));
+            alert("Friend request accepted!");
         } catch (error) {
-            console.log("Error accepting request:", error.response?.data?.message);
+            alert(error.response?.data?.message);
         }
     };
 
-    const handleImageChange = (e) => {
-        setImage(e.target.files[0]);
-    };
-
-    const handleDescriptionChange = (e) => {
-        setDescription(e.target.value);
-    };
-
+    // Handle Image Upload
     const handleImageUpload = async () => {
         if (!image) {
-            setUploadStatus("Please select an image to upload.");
+            setUploadStatus("Please select an image.");
             return;
         }
 
         const formData = new FormData();
         formData.append("image", image);
         formData.append("userId", user?._id);
-        formData.append("description", description); // Add description to form data
+        formData.append("description", description);
 
         try {
             const token = localStorage.getItem("token");
@@ -127,9 +121,7 @@ const Profile = () => {
             });
 
             setUploadStatus("Image uploaded successfully.");
-            setPosts([...posts, res.data.image]); 
-            console.log(res.data);
-
+            setPosts([...posts, res.data.post]); // Update posts with new one
             setImage(null);
             setDescription("");
         } catch (error) {
@@ -138,97 +130,117 @@ const Profile = () => {
     };
 
     return (
-        <div className=" w-screen p-4 flex flex-col items-center bg-gray-600">
-            <SearchUsers />
-            {/* <VideoCall userId={user?._id} token={localStorage.getItem("token")}/> */}
+        <div className="max-w-5xl w-full h-full p-4 mx-auto bg-purple-100 shadow-lg rounded-xl">
+            <div className="grid grid-cols-3 gap-8">
+                {/* Profile Info (Left) */}
+                <div className="col-span-1 bg-gradient-to-br from-white to-gray-100 p-6 rounded-lg shadow-md">
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-4">Your Profile</h2>
+                    {user && (
+                        <div className="text-center">
+                            <img
+                                src={user.profileImage ? `http://localhost:5001${user.profileImage}` : "/default-avatar.png"}
+                                alt="Profile"
+                                className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-blue-500 shadow-md"
+                            />
+                            <h3 className="text-xl font-semibold mt-4 text-gray-900">{user.name}</h3>
+                            <p className="text-gray-600">@{user.username}</p>
+                            <p className="mt-2 font-medium text-gray-700">
+                                Gender: <span className="bg-blue-100 px-2 py-1 rounded-full text-blue-700 shadow-md"> {user.gender}</span>
+                            </p>
 
-            {/* <div className="mt-2 text-lg font-bold text-green-600">
-                Online Users: {onlineUsers}
-            </div> */}
-
-            {user && (
-                <div className="text-center">
-                    <h2 className="text-lg font-bold">{user.name}</h2>
-                    <p className="text-gray-600">@{user.username}</p>
-
-                    {user.profileImage ? (
-                        <img
-                            src={`http://localhost:5001${user.profileImage}`}
-                            alt="Profile"
-                            className="w-44 h-44 rounded-full mt-2"
-                        />
-                    ) : (
-                        <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center mt-2">
-                            <span className="text-gray-600">No Image</span>
+                            {/* Interests */}
+                            <div className="mt-4">
+                                <h4 className="text-lg font-semibold mb-2 text-gray-800">Interests</h4>
+                                <h5 className="text-md font-semibold mb-2 text-gray-800 mb-4">
+                                    Friends Count{" "}
+                                    <span className="bg-blue-100 px-2 py-1 rounded-full text-blue-700 shadow-md">
+                                        {user.friends?.length}
+                                    </span>
+                                </h5>
+                                <div className="flex flex-wrap gap-2 justify-center">
+                                    {user.interests.map((interest, index) => (
+                                        <span key={index} className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-700 shadow-md">
+                                            {interest}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
-                    <p className="mt-2">Gender: {user.gender}</p>
-                    <p>Interests: {user.interests.join(", ")}</p>
-                    <p className="mt-2">Friends: {user.friends.length}</p>
-                </div>
-            )}
-       
-            <div className="mt-4 w-full max-w-md">
-                <h3 className="text-lg font-bold">Upload Post</h3>
-                <input 
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleImageChange} 
-                    className="block w-full border border-gray-300 p-2 mt-2"
-                />
-                <textarea
-                    value={description}
-                    onChange={handleDescriptionChange}
-                    placeholder="Write a description..."
-                    className="block w-full border border-gray-300 p-2 mt-2"
-                    rows="3"
-                />
-                <button 
-                    onClick={handleImageUpload} 
-                    className="bg-blue-500 text-white px-4 py-2 mt-2 rounded"
-                >
-                    Upload
-                </button>
-                {uploadStatus && <p className="mt-2">{uploadStatus}</p>}
-            </div>
-
-            <div className="mt-4 w-full max-w-md">
-                <h3 className="text-lg font-bold">Your Posts</h3>
-                {posts.length === 0 ? (
-                    <p>No posts uploaded yet.</p>
-                ) : (
-                    <div className="grid grid-cols-3 gap-4">
-                        {posts.map((post) => (
-                            <div key={post._id} className="w-full h-32 overflow-hidden rounded-lg">
-                                <img
-                                    src={`http://localhost:5001/${post.path}`}
-                                    alt="Post"
-                                    className="w-full h-full object-cover"
-                                />
-                                <p className="mt-2 text-sm text-red-700">{post?.description}</p> 
-                            </div>
-                        ))}
+                    {/* Upload Post Section */}
+                    <div className="mt-8 p-6 bg-white shadow-lg rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Upload Post</h3>
+                        <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} className="block w-full border p-2 mb-2 rounded-lg shadow-sm" />
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Write a description..."
+                            className="block w-full border p-2 mb-2 rounded-lg shadow-sm"
+                            rows="3"
+                        />
+                        <button
+                            onClick={handleImageUpload}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-600 transition"
+                        >
+                            Upload
+                        </button>
+                        {uploadStatus && <p className="mt-2 text-sm text-gray-600">{uploadStatus}</p>}
                     </div>
-                )}
-            </div>
-
-            {friendRequests.length > 0 && (
-                <div className="mt-4 w-full max-w-md">
-                    <h3 className="text-lg font-bold">Friend Requests</h3>
-                    {friendRequests.map((req) => (
-                        <div key={req._id} className="border p-4 mb-2 flex justify-between items-center">
-                            <p>{req.name} (@{req.username})</p>
-                            <button
-                                className="bg-green-500 text-white px-2 py-1 rounded"
-                                onClick={() => handleAccept(req._id)}
-                            >
-                                Accept
-                            </button>
-                        </div>
-                    ))}
                 </div>
-            )}
+
+
+                {/* Posts (Right) */}
+                <div className="col-span-2">
+                    <SearchUsers />
+                    {/* Friend Requests Section */}
+                    {friendRequests?.length > 0 && (
+                        <div className="mt-8 p-6 bg-white shadow-lg rounded-lg">
+                            <h3 className="text-lg font-semibold mb-2 text-gray-800">Incoming Friend Requests</h3>
+                            <div className="space-y-4">
+                                {friendRequests.map((request) => (
+                                    <div key={request.senderId} className="flex justify-between items-center bg-gray-100 p-3 rounded-lg shadow-md">
+                                        <div className="flex items-center gap-3">
+                                            <img
+                                                src={request.senderProfileImage ? `http://localhost:5001${request.senderProfileImage}` : "/default-avatar.png"}
+                                                alt="Sender"
+                                                className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                                            />
+                                            <span className="text-gray-800 font-semibold">@{request.senderUsername}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => AcceptFriendRequest(request.senderId)}
+                                            className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-600 transition"
+                                        >
+                                            Accept
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Your Posts</h3>
+                    {posts.length === 0 ? (
+                        <p className="text-gray-500">No posts uploaded yet.</p>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-4">
+                            {posts.map((post, index) => (
+                                <div key={index} className="relative rounded-lg overflow-hidden shadow-lg transition-transform transform hover:scale-105">
+                                    <img
+                                        src={`http://localhost:5001/${post.path}`}
+                                        alt="Post"
+                                        className="w-full h-56 object-cover"
+                                    />
+                                    <p className="absolute bottom-0 bg-purple-200 bg-opacity-50 text-black text-sm p-2 w-full">{post.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
