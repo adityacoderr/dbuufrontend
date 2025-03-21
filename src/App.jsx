@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Chat from "./components/Chat";
 import Homepage from "./pages/Homepage";
 import FriendsProfile from "./components/FriendsProfile";
+import Explore from "./pages/Explore";
 window.global = window;
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:username" element={<FriendsProfile />} />
                     <Route path="/chat" element={<Chat />} />
+                    <Route path="/explore" element={<Explore />} />
                     <Route path="/logout" element={<Logout />} />
                 </Route>
             </Routes>

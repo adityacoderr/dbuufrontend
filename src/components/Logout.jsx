@@ -13,7 +13,6 @@ const Logout = () => {
                 console.error("Logout failed:", error.response?.data?.message);
             }
 
-            // Clear token & redirect
             localStorage.removeItem("token");
             navigate("/login");
         };

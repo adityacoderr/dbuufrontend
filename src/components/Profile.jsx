@@ -29,6 +29,7 @@ const Profile = () => {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setUser(res.data);
+                console.log(user);
             } catch (error) {
                 console.log("Error fetching profile:", error.response?.data?.message);
             }
@@ -126,10 +127,9 @@ const Profile = () => {
             });
 
             setUploadStatus("Image uploaded successfully.");
-            setPosts([...posts, res.data.image]); // Add the uploaded image to the posts list
+            setPosts([...posts, res.data.image]); 
             console.log(res.data);
 
-            // Reset the image and description after upload
             setImage(null);
             setDescription("");
         } catch (error) {
@@ -138,16 +138,14 @@ const Profile = () => {
     };
 
     return (
-        <div className="h-screen w-screen p-4 flex flex-col items-center">
+        <div className=" w-screen p-4 flex flex-col items-center bg-gray-600">
             <SearchUsers />
-            {/* <VideoCall userId={user?._id} /> */}
+            {/* <VideoCall userId={user?._id} token={localStorage.getItem("token")}/> */}
 
-            {/* Online Users Display */}
-            <div className="mt-2 text-lg font-bold text-green-600">
+            {/* <div className="mt-2 text-lg font-bold text-green-600">
                 Online Users: {onlineUsers}
-            </div>
+            </div> */}
 
-            {/* Profile Information */}
             {user && (
                 <div className="text-center">
                     <h2 className="text-lg font-bold">{user.name}</h2>
@@ -167,9 +165,10 @@ const Profile = () => {
 
                     <p className="mt-2">Gender: {user.gender}</p>
                     <p>Interests: {user.interests.join(", ")}</p>
+                    <p className="mt-2">Friends: {user.friends.length}</p>
                 </div>
             )}
-
+       
             <div className="mt-4 w-full max-w-md">
                 <h3 className="text-lg font-bold">Upload Post</h3>
                 <input 
@@ -214,7 +213,6 @@ const Profile = () => {
                 )}
             </div>
 
-            {/* Friend Requests */}
             {friendRequests.length > 0 && (
                 <div className="mt-4 w-full max-w-md">
                     <h3 className="text-lg font-bold">Friend Requests</h3>

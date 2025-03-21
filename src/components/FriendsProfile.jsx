@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom"; // To get username from URL
+import { useParams } from "react-router-dom"; 
 import axios from "axios";
 
 const FriendsProfile = () => {
-    const { username } = useParams(); // Get username from URL
+    const { username } = useParams(); 
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -23,7 +23,7 @@ const FriendsProfile = () => {
         };
 
         fetchProfile();
-    }, [username]); // Refetch when username changes
+    }, [username]); 
 
     console.log(user);
     return (

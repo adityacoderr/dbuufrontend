@@ -32,21 +32,22 @@ const Signup = () => {
         formDataObj.append("email", formData.email);
         formDataObj.append("password", formData.password);
         formDataObj.append("gender", formData.gender);
-        formDataObj.append("interests", JSON.stringify(formData.interests)); // Convert to JSON
-        formDataObj.append("profileImage", formData.profileImage); // Append Image
+        formDataObj.append("interests", JSON.stringify(formData.interests)); 
+        formDataObj.append("profileImage", formData.profileImage); 
 
         try {
             await axios.post("http://localhost:5001/api/auth/signup", formDataObj, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            alert("Signup successful!");
+            window.location.href = "/login";
         } catch (err) {
             alert(err.response?.data?.message || "Signup failed!");
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="p-4 bg-gray-100">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <input type="text" name="name" placeholder="Name" onChange={handleChange} required />
             <input type="text" name="username" placeholder="Username" onChange={handleChange} required />
             <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
@@ -56,17 +57,16 @@ const Signup = () => {
                 <option value="">Select Gender</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
-                <option value="Other">Other</option>
             </select>
 
             <input type="text" name="interests" placeholder="Interests (comma separated)" 
                 onChange={handleChange} required />
 
-            {/* Profile Image Upload */}
             <input type="file" name="profileImage" accept="image/*" onChange={handleChange} required />
 
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2">Sign Up</button>
+            <button type="submit" className="bg-blue-500 text-white rounded px-4 py-2 w-[150px]">Sign Up</button>
         </form>
+        </div>
     );
 };
 

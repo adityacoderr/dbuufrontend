@@ -9,7 +9,6 @@ const ChatBox = ({ selectedFriend }) => {
     const chatContainerRef = useRef(null);
     const isAtBottomRef = useRef(true);
 
-    // Extract logged-in user ID from JWT
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
@@ -18,7 +17,6 @@ const ChatBox = ({ selectedFriend }) => {
         }
     }, []);
 
-    // Fetch messages
     const fetchMessages = async () => {
         if (!selectedFriend) return;
 
@@ -33,7 +31,6 @@ const ChatBox = ({ selectedFriend }) => {
         }
     };
 
-    // Auto-fetch messages every 2 seconds
     useEffect(() => {
         if (!selectedFriend) return;
 
@@ -46,7 +43,6 @@ const ChatBox = ({ selectedFriend }) => {
         return () => clearInterval(interval);
     }, [selectedFriend]);
 
-    // Handle auto-scroll
     useEffect(() => {
         if (isAtBottomRef.current) {
             chatContainerRef.current?.scrollTo({
@@ -56,7 +52,6 @@ const ChatBox = ({ selectedFriend }) => {
         }
     }, [messages]);
 
-    // Check if user is at the bottom
     const handleScroll = () => {
         if (!chatContainerRef.current) return;
 
@@ -64,7 +59,6 @@ const ChatBox = ({ selectedFriend }) => {
         isAtBottomRef.current = scrollTop + clientHeight >= scrollHeight - 10;
     };
 
-    // Send Message
     const sendMessage = async () => {
         if (!newMessage.trim()) return;
 
@@ -85,7 +79,6 @@ const ChatBox = ({ selectedFriend }) => {
             setMessages((prev) => [...prev, newMsg]);
             setNewMessage("");
 
-            // Force scroll only if user is already at the bottom
             if (isAtBottomRef.current) {
                 setTimeout(() => {
                     chatContainerRef.current?.scrollTo({
@@ -99,7 +92,6 @@ const ChatBox = ({ selectedFriend }) => {
         }
     };
 
-    // Handle "Enter" key press to send message
     const handleKeyDown = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -109,12 +101,10 @@ const ChatBox = ({ selectedFriend }) => {
 
     return (
         <div className="flex flex-col h-full w-full">
-            {/* Chat Header */}
             <h2 className="text-lg font-bold p-2 border-b bg-blue-100 text-black text-center">
                 {selectedFriend.name}
             </h2>
 
-            {/* Messages Display */}
             <div
                 ref={chatContainerRef}
                 onScroll={handleScroll}
@@ -132,7 +122,6 @@ const ChatBox = ({ selectedFriend }) => {
                 ))}
             </div>
 
-            {/* Message Input */}
             <div className="p-2 border-t flex text-black ">
                 <input
                     type="text"

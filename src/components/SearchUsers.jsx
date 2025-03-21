@@ -34,14 +34,16 @@ const SearchUsers = () => {
                 <button onClick={handleSearch} className="bg-blue-500 text-white px-4 py-2 rounded">Search</button>
             </div>
 
-            {/* Show search results */}
-            <div className="mt-4">
+            {users.length > 0 && (
+                <div className="mt-4">
                 {users.length > 0 ? (
                     users.map((user) => <UserCard key={user._id} user={user} />)
                 ) : (
                     <p className="text-gray-500 mt-2">No users found.</p>
                 )}
             </div>
+            )}
+            
         </div>
     );
 };
