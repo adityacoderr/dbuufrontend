@@ -20,8 +20,8 @@ const Chat = () => {
     return (
         <div className="flex h-screen w-screen bg-gray-100">
             {/* Friends List Sidebar */}
-            <div className="w-1/4 bg-blue-600 p-4 text-white shadow-lg flex flex-col">
-                <h2 className="text-xl font-bold mb-4 text-center">Friends</h2>
+            <div className="w-1/4 bg-blue-200 p-4 text-white shadow-lg flex flex-col">
+                <h2 className="text-xl text-black font-bold mb-4 text-center">Friends</h2>
                 <FriendsList setSelectedFriend={handleSelectFriend} />
             </div>
 

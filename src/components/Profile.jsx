@@ -7,6 +7,8 @@ import SearchUsers from "./SearchUsers";
 
 const socket = io("http://localhost:5001", { transports: ["websocket"] });
 
+// There are neccessery comments below to understand the code- inserted by WL-CODERRS
+
 const Profile = () => {
     const [user, setUser] = useState(null);
     const [friendRequests, setFriendRequests] = useState([]);
@@ -17,7 +19,7 @@ const Profile = () => {
 
     const username = localStorage.getItem("username");
 
-    // Fetch User Profile
+    // Fetch User Profile Data
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -69,6 +71,7 @@ const Profile = () => {
     // Fetch Posts after user is set
     useEffect(() => {
         if (!user?._id) return;
+        localStorage.setItem("userId", user._id);
 
         const fetchPosts = async () => {
             try {
@@ -99,7 +102,6 @@ const Profile = () => {
         }
     };
 
-    // Handle Image Upload
     const handleImageUpload = async () => {
         if (!image) {
             setUploadStatus("Please select an image.");
@@ -121,7 +123,7 @@ const Profile = () => {
             });
 
             setUploadStatus("Image uploaded successfully.");
-            setPosts([...posts, res.data.post]); // Update posts with new one
+            setPosts([...posts, res.data.post]); 
             setImage(null);
             setDescription("");
         } catch (error) {
@@ -130,7 +132,7 @@ const Profile = () => {
     };
 
     return (
-        <div className="max-w-5xl w-full h-full p-4 mx-auto bg-purple-100 shadow-lg rounded-xl">
+        <div className="max-w-5xl w-full h-full p-4 mx-auto bg-purple-100 shadow-lg rounded-xl overflow-auto">
             <div className="grid grid-cols-3 gap-8">
                 {/* Profile Info (Left) */}
                 <div className="col-span-1 bg-gradient-to-br from-white to-gray-100 p-6 rounded-lg shadow-md">

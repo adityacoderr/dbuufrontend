@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
 const VideoCall = ({ user }) => {
-    if (!user) return <div>Loading...</div>;
+    if (!user) return <div className="text-center text-gray-500">Loading...</div>;
 
     const [hasMatched, setHasMatched] = useState(false);
     const [matchedUser, setMatchedUser] = useState(null);
@@ -39,7 +39,6 @@ const VideoCall = ({ user }) => {
 
     const startMatching = () => {
         if (!socket.current) return;
-
         socket.current.emit("findMatch", { userId, gender, interests });
     };
 
@@ -130,19 +129,40 @@ const VideoCall = ({ user }) => {
     };
 
     return (
-        <div>
-            <div>
-                <video ref={localVideoRef} autoPlay muted></video>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-300 text-white">
+            <h2 className="text-3xl font-semibold mb-6 text-gray-800">Interests Based Video Call</h2>
+
+            <div className="flex gap-6">
+                <div className="w-72 h-52 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+                    <video ref={localVideoRef} autoPlay muted className="w-full h-full object-cover"></video>
+                </div>
+
+                <div className="w-72 h-52 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+                    <video ref={remoteVideoRef} autoPlay className="w-full h-full object-cover"></video>
+                </div>
             </div>
-            <div>
-                <video ref={remoteVideoRef} autoPlay></video>
+
+            <div className="mt-6 flex gap-4">
+                {!hasMatched ? (
+                    <button
+                        onClick={startMatching}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300"
+                    >
+                        Start Matching
+                    </button>
+                ) : (
+                    <button
+                        onClick={startVideoCall}
+                        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-lg transition duration-300"
+                    >
+                        Start Video Call
+                    </button>
+                )}
+
+               
             </div>
-            {!hasMatched && (
-                <button onClick={startMatching}>Start Matching</button>
-            )}
-            {hasMatched && (
-                <button onClick={startVideoCall}>Start Video Call</button>
-            )}
+            <p className="mt-4 text-black">We've added nudity detection to have safe content.</p>
+            <p className="mt-4 text-black">Due to same system we can't use both camera at the same time. We can use only one camera. After deployment we can use both camera. Check console for more information.</p>
         </div>
     );
 };

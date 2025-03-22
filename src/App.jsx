@@ -5,13 +5,15 @@ import axios from "axios";
 import Login from "./components/Login";
 import Logout from "./components/Logout";
 import Signup from "./components/Signup";
-import Profile from "./pages/Profile"; // Example of a protected page
+import Profile from "./pages/Profile"; 
 import ProtectedRoute from "./components/ProtectedRoute";
 import Chat from "./pages/Chat";
 import Homepage from "./pages/Homepage";
 import FriendsProfile from "./components/FriendsProfile";
 import Explore from "./pages/Explore";
 import VideoCall from "./components/VideoCall";
+import GroupDetails from "./components/groupDetails";
+import CreateCommunity from "./components/CreateCummunity";
 window.global = window;
 function App() {
     const [user, setUser] = useState(null);
@@ -42,7 +44,6 @@ function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/logout" element={<Logout />} />
                 
-                {/* Protect all routes inside this */}
                 <Route element={<ProtectedRoute />}>
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/profile/:username" element={<FriendsProfile />} />
@@ -50,6 +51,7 @@ function App() {
                     <Route path="/match" element={<VideoCall user={user}/>} />
                     <Route path="/explore" element={<Explore />} />
                     <Route path="/logout" element={<Logout />} />
+                    <Route path="/cummunity" element={<CreateCommunity />} />
                 </Route>
             </Routes>
         </Router>

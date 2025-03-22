@@ -24,6 +24,8 @@ const Explore = () => {
         <div className="h-screen w-screen p-6 flex flex-col items-center bg-gradient-to-r from-blue-500 to-purple-600">
             <h2 className="text-3xl font-bold text-white mb-6">🌍 Explore People</h2>
 
+            <h3 className="text-xl font-semibold text-white mb-4">Like Minded People's</h3>
+
             {users.length === 0 ? (
                 <p className="text-white text-lg">No matching users found.</p>
             ) : (
@@ -37,7 +39,7 @@ const Explore = () => {
                                 <img
                                     src={`http://localhost:5001${user.profileImage}`}
                                     alt="Profile"
-                                    className="w-28 h-28 rounded-full mx-auto border-4 border-blue-300"
+                                    className="w-28 h-28 rounded-full object-cover mx-auto border-4 border-blue-300"
                                 />
                             ) : (
                                 <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center mx-auto">

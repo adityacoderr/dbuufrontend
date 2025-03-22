@@ -25,7 +25,7 @@ const FriendsList = ({ setSelectedFriend }) => {
             {friends.map((friend) => (
                 <li
                     key={friend._id}
-                    className="cursor-pointer text-black p-2 hover:bg-gray-200"
+                    className="cursor-pointer text-black p-2 hover:bg-gray-200 rounded-lg"
                     onClick={() => setSelectedFriend(friend)}
                 >
                     {friend.name} 
